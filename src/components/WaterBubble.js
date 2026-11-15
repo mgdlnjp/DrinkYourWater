@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { ND } from './ui';
 
@@ -11,6 +11,13 @@ function wavePath(width, period, amp, height) {
     d += ` Q ${x + (3 * period) / 4} ${3 * amp} ${x + period} ${amp}`;
   }
   return `${d} L ${width} ${height} L 0 ${height} Z`;
+}
+
+// Taille unique de la bulle dans toute l'app : elle suit la largeur de l'écran,
+// mais ne change jamais d'un écran ou d'une étape à l'autre.
+export function useBubbleSize() {
+  const { width } = useWindowDimensions();
+  return Math.round(Math.max(180, Math.min(232, Math.min(width, 520) * 0.56)));
 }
 
 // Bulle d'eau animée : le niveau monte avec la progression, deux vagues ondulent,

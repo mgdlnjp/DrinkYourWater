@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHydration } from '../store';
 import { ensurePermission } from '../notifications';
-import WaterBubble from '../components/WaterBubble';
+import WaterBubble, { useBubbleSize } from '../components/WaterBubble';
 import { Chip, PrimaryButton, PressableScale, Txt, formatMl, hhmm, useTheme } from '../components/ui';
 import { GOALS, INTERVALS } from './Settings';
 import { radius, space } from '../theme';
@@ -18,6 +18,7 @@ const STEPS = 3;
 export default function Onboarding() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const bubbleSize = useBubbleSize();
   const { settings, updateSettings, setOnboarded } = useHydration();
   const [step, setStep] = useState(0);
   const [fill, setFill] = useState(0.15);
@@ -53,7 +54,7 @@ export default function Onboarding() {
         </View>
 
         <View style={styles.bubble}>
-          <WaterBubble progress={fill} size={step === 0 ? 220 : 150} />
+          <WaterBubble progress={fill} size={bubbleSize} />
         </View>
 
         <View>
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: space.xl, paddingBottom: space.xl },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 32 },
   back: { paddingVertical: space.xs },
-  bubble: { alignItems: 'center', marginVertical: space.xxl },
+  bubble: { alignItems: 'center', marginVertical: space.xl },
   lead: { marginTop: space.md },
   bigValue: { marginVertical: space.lg },
   features: { marginTop: space.xl, gap: space.sm },

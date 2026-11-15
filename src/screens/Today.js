@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useHydration, nextReminder, streak } from '../store';
-import WaterBubble from '../components/WaterBubble';
+import WaterBubble, { useBubbleSize } from '../components/WaterBubble';
 import Timeline from '../components/Timeline';
 import { useTabSpace } from '../components/TabBar';
 import {
@@ -46,6 +46,7 @@ export default function Today() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const tabSpace = useTabSpace();
+  const bubbleSize = useBubbleSize();
   const { settings, now, todayEntries, drankMl, addDrink, removeDrink, log } = useHydration();
   const goal = settings.goalMl;
   const pct = drankMl / goal;
@@ -97,7 +98,7 @@ export default function Today() {
           </View>
 
           <View style={styles.bubbleWrap}>
-            <WaterBubble progress={pct} size={212} burst={burst}>
+            <WaterBubble progress={pct} size={bubbleSize} burst={burst}>
               <Txt v="hero" bold color="#fff" style={styles.shadowText}>
                 {formatNumber(drankMl)}
               </Txt>
