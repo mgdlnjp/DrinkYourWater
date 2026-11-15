@@ -2,15 +2,15 @@
   "expo": {
     "name": "DrinkYourWater",
     "slug": "DrinkYourWater",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F3F7FC"
     },
     "ios": {
       "supportsTablet": true,
@@ -22,18 +22,27 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#2B7FFF"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.DrinkYourWater2.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "DrinkYourWater"
     },
     "extra": {
       "eas": {
         "projectId": "43273842-0de9-4a76-9b9e-481b2eac7ccf"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#2B7FFF"
+        }
+      ]
+    ]
   }
 }
