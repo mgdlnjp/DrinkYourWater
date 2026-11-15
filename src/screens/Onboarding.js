@@ -68,7 +68,7 @@ export default function Onboarding() {
       <View style={[styles.blob, styles.blobA]} />
       <View style={[styles.blob, styles.blobB]} />
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + space.lg }]} showsVerticalScrollIndicator={false}>
-        <View style={[styles.top, { top: insets.top + space.sm }]}>
+        <View style={styles.top}>
           {step > 0 ? (
             <PressableScale onPress={() => go(step - 1)} accessibilityLabel="Retour" style={styles.back}>
               <Txt v="body" bold color="#fff">
@@ -195,19 +195,9 @@ const styles = StyleSheet.create({
   blobA: { width: 320, height: 320, top: -140, right: -120 },
   blobB: { width: 240, height: 240, bottom: 80, left: -120 },
   scroll: { paddingHorizontal: space.xl, paddingBottom: space.md },
-  // Superposée au-dessus de la bulle pour lui laisser toute la hauteur.
-  top: {
-    position: 'absolute',
-    left: space.xl,
-    right: space.xl,
-    zIndex: 2,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    minHeight: 32,
-  },
+  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 32 },
   back: { paddingVertical: space.xs },
-  bubble: { alignItems: 'center', marginTop: space.sm, marginBottom: space.md },
+  bubble: { alignItems: 'center', marginVertical: space.lg },
   lead: { marginTop: space.sm },
   bigValue: { marginVertical: space.lg },
   features: { marginTop: space.lg, gap: space.sm },
