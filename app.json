@@ -6,12 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F3F7FC"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.DrinkYourWater2.app",
@@ -24,7 +18,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2B7FFF"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.DrinkYourWater2.app"
     },
     "web": {
@@ -42,7 +35,20 @@
         {
           "color": "#2B7FFF"
         }
-      ]
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#F3F7FC",
+          "dark": {
+            "backgroundColor": "#06101D"
+          }
+        }
+      ],
+      "expo-font"
     ]
   }
 }
