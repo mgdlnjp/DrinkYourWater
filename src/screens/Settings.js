@@ -1,50 +1,60 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useHydration, reminderTimes } from '../store';
-import { Card, Chip, SectionTitle, Stepper, formatMl, hhmm, tap, useTheme } from '../components/ui';
-import { radius, space, type } from '../theme';
+import { useTabSpace } from '../components/TabBar';
+import { Card, Chip, IconTile, PressableScale, RoundButton, SectionTitle, Stepper, Txt, formatMl, hhmm, tap, useTheme } from '../components/ui';
+import { drinks, radius, space } from '../theme';
 
 export const GOALS = [1500, 2000, 2500, 3000];
-export const GLASSES = [
-  { ml: 200, emoji: '🥃' },
-  { ml: 250, emoji: '🥛' },
-  { ml: 330, emoji: '🥤' },
-  { ml: 500, emoji: '🍶' },
-];
 export const INTERVALS = [
   { min: 60, label: '1 h' },
   { min: 90, label: '1 h 30' },
   { min: 120, label: '2 h' },
   { min: 180, label: '3 h' },
 ];
+const GLASSES = drinks.filter((d) => d.ml <= 500);
 const THEMES = [
-  { key: 'system', label: 'Auto', icon: 'phone-portrait-outline' },
-  { key: 'light', label: 'Clair', icon: 'sunny-outline' },
-  { key: 'dark', label: 'Sombre', icon: 'moon-outline' },
+  { key: 'system', label: 'Auto', icon: 'contrast' },
+  { key: 'light', label: 'Clair', icon: 'sunny' },
+  { key: 'dark', label: 'Sombre', icon: 'moon' },
 ];
 
 export default function Settings() {
   const t = useTheme();
+  const insets = useSafeAreaInsets();
+  const tabSpace = useTabSpace();
   const { settings: s, updateSettings, resetToday } = useHydration();
   const [confirmReset, setConfirmReset] = useState(false);
-  const count = reminderTimes(s).length;
+  const times = reminderTimes(s);
+  const glasses = Math.round(s.goalMl / s.glassMl);
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-      <Text style={[styles.title, { color: t.text, marginBottom: space.xl }]}>Réglages</Text>
+    <ScrollView
+      contentContainerStyle={{ paddingTop: insets.top + space.lg, paddingBottom: tabSpace + space.xl, paddingHorizontal: space.lg }}
+      showsVerticalScrollIndicator={false}
+    >
+      <Txt v="title" bold style={{ marginBottom: space.xl }}>
+        Réglages
+      </Txt>
 
-      <SectionTitle>Objectif quotidien</SectionTitle>
-      <Card>
-        <View style={styles.centerRow}>
-          <Stepper
-            value={s.goalMl}
-            format={formatMl}
-            onMinus={() => updateSettings({ goalMl: Math.max(500, s.goalMl - 250) })}
-            onPlus={() => updateSettings({ goalMl: Math.min(5000, s.goalMl + 250) })}
-          />
+      {/* Objectif : la valeur est la star */}
+      <Card style={styles.goalCard}>
+        <Txt v="caption" color={t.textMuted}>
+          Objectif quotidien
+        </Txt>
+        <View style={styles.goalRow}>
+          <RoundButton icon="remove" size={52} label="Diminuer l'objectif" onPress={() => updateSettings({ goalMl: Math.max(500, s.goalMl - 250) })} />
+          <Txt v="hero" bold color={t.accent} style={styles.goalValue}>
+            {formatMl(s.goalMl)}
+          </Txt>
+          <RoundButton icon="add" size={52} label="Augmenter l'objectif" onPress={() => updateSettings({ goalMl: Math.min(5000, s.goalMl + 250) })} />
         </View>
-        <View style={[styles.chips, { marginTop: space.lg }]}>
+        <Txt v="caption" color={t.textMuted}>
+          ≈ {glasses} verres de {s.glassMl} ml
+        </Txt>
+        <View style={[styles.chips, { marginTop: space.lg, justifyContent: 'center' }]}>
           {GOALS.map((g) => (
             <Chip key={g} label={formatMl(g)} selected={s.goalMl === g} onPress={() => updateSettings({ goalMl: g })} />
           ))}
@@ -53,30 +63,46 @@ export default function Settings() {
 
       <View style={styles.gap} />
       <SectionTitle>Ton verre habituel</SectionTitle>
-      <View style={styles.chips}>
-        {GLASSES.map((g) => (
-          <Chip
-            key={g.ml}
-            emoji={g.emoji}
-            label={`${g.ml} ml`}
-            selected={s.glassMl === g.ml}
-            onPress={() => updateSettings({ glassMl: g.ml })}
-          />
-        ))}
+      <View style={styles.glassRow}>
+        {GLASSES.map((g) => {
+          const on = s.glassMl === g.ml;
+          return (
+            <PressableScale
+              key={g.ml}
+              containerStyle={styles.flex}
+              onPress={() => updateSettings({ glassMl: g.ml })}
+              accessibilityLabel={`${g.label} ${g.ml} ml`}
+              style={[
+                styles.glassCard,
+                { backgroundColor: on ? `${g.tint}1F` : t.card, borderColor: on ? g.tint : t.border },
+              ]}
+            >
+              <Text style={styles.glassEmoji}>{g.emoji}</Text>
+              <Txt v="caption" bold color={on ? t.text : t.textBody}>
+                {g.ml} ml
+              </Txt>
+              {on && (
+                <View style={[styles.check, { backgroundColor: g.tint }]}>
+                  <Ionicons name="checkmark" size={12} color="#fff" />
+                </View>
+              )}
+            </PressableScale>
+          );
+        })}
       </View>
 
       <View style={styles.gap} />
       <SectionTitle>Rappels</SectionTitle>
-      <Card>
+      <Card style={styles.noPad}>
         <View style={styles.row}>
-          <View style={[styles.icon, { backgroundColor: t.accentSoft }]}>
-            <Ionicons name="notifications" size={18} color={t.accent} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.body, { color: t.text, fontWeight: type.bold }]}>Notifications</Text>
-            <Text style={[styles.caption, { color: t.textMuted }]}>
-              {s.remindersOn ? `${count} rappels par jour` : 'Désactivées'}
-            </Text>
+          <IconTile icon="notifications" color="#F59E0B" />
+          <View style={styles.flex}>
+            <Txt v="body" bold>
+              Notifications
+            </Txt>
+            <Txt v="caption" color={t.textMuted}>
+              {s.remindersOn ? `${times.length} rappels doux par jour` : 'Désactivées'}
+            </Txt>
           </View>
           <Switch
             value={s.remindersOn}
@@ -94,7 +120,10 @@ export default function Settings() {
           <>
             <View style={[styles.divider, { backgroundColor: t.border }]} />
             <View style={styles.row}>
-              <Text style={[styles.body, styles.flex, { color: t.textBody }]}>☀️ Réveil</Text>
+              <IconTile icon="sunny" color="#F97316" />
+              <Txt v="body" style={styles.flex}>
+                Réveil
+              </Txt>
               <Stepper
                 value={s.wakeHour}
                 format={(h) => hhmm(h)}
@@ -102,8 +131,12 @@ export default function Settings() {
                 onPlus={() => updateSettings({ wakeHour: Math.min(s.sleepHour - 2, s.wakeHour + 1) })}
               />
             </View>
-            <View style={[styles.row, { marginTop: space.md }]}>
-              <Text style={[styles.body, styles.flex, { color: t.textBody }]}>🌙 Coucher</Text>
+            <View style={[styles.divider, { backgroundColor: t.border }]} />
+            <View style={styles.row}>
+              <IconTile icon="moon" color="#6366F1" />
+              <Txt v="body" style={styles.flex}>
+                Coucher
+              </Txt>
               <Stepper
                 value={s.sleepHour}
                 format={(h) => hhmm(h)}
@@ -112,16 +145,25 @@ export default function Settings() {
               />
             </View>
             <View style={[styles.divider, { backgroundColor: t.border }]} />
-            <Text style={[styles.caption, { color: t.textMuted, marginBottom: space.md }]}>Un rappel toutes les…</Text>
-            <View style={styles.chips}>
-              {INTERVALS.map((i) => (
-                <Chip
-                  key={i.min}
-                  label={i.label}
-                  selected={s.intervalMin === i.min}
-                  onPress={() => updateSettings({ intervalMin: i.min })}
-                />
-              ))}
+            <View style={styles.block}>
+              <View style={[styles.row, styles.noRowPad]}>
+                <IconTile icon="timer" color="#10B981" />
+                <Txt v="body" style={styles.flex}>
+                  Un rappel toutes les…
+                </Txt>
+              </View>
+              <View style={[styles.chips, { marginTop: space.md }]}>
+                {INTERVALS.map((i) => (
+                  <Chip key={i.min} label={i.label} selected={s.intervalMin === i.min} onPress={() => updateSettings({ intervalMin: i.min })} />
+                ))}
+              </View>
+              <View style={[styles.preview, { backgroundColor: t.accentSoft }]}>
+                <Ionicons name="time-outline" size={16} color={t.accent} />
+                <Txt v="caption" color={t.textBody} style={styles.flex} numberOfLines={2}>
+                  {times.slice(0, 6).map((x) => hhmm(x.hour, x.minute)).join(' · ')}
+                  {times.length > 6 ? ' …' : ''}
+                </Txt>
+              </View>
             </View>
           </>
         )}
@@ -129,23 +171,22 @@ export default function Settings() {
 
       <View style={styles.gap} />
       <SectionTitle>Apparence</SectionTitle>
-      <View style={[styles.segment, { backgroundColor: t.accentSoft }]}>
+      <View style={styles.themeRow}>
         {THEMES.map((th) => {
           const on = s.theme === th.key;
           return (
-            <Pressable
+            <PressableScale
               key={th.key}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-              onPress={() => {
-                tap('light');
-                updateSettings({ theme: th.key });
-              }}
-              style={[styles.segItem, on && { backgroundColor: t.card }]}
+              containerStyle={styles.flex}
+              onPress={() => updateSettings({ theme: th.key })}
+              accessibilityLabel={`Thème ${th.label}`}
+              style={[styles.themeCard, { backgroundColor: on ? t.accent : t.card, borderColor: on ? t.accent : t.border }]}
             >
-              <Ionicons name={th.icon} size={16} color={on ? t.accent : t.textMuted} />
-              <Text style={[styles.caption, { color: on ? t.text : t.textMuted, fontWeight: type.bold }]}>{th.label}</Text>
-            </Pressable>
+              <Ionicons name={th.icon} size={22} color={on ? '#fff' : t.textMuted} />
+              <Txt v="caption" bold color={on ? '#fff' : t.textBody}>
+                {th.label}
+              </Txt>
+            </PressableScale>
           );
         })}
       </View>
@@ -159,50 +200,57 @@ export default function Settings() {
           resetToday();
           setConfirmReset(false);
         }}
-        style={[styles.reset, { borderColor: confirmReset ? t.danger : t.border }]}
+        style={[styles.reset, { borderColor: confirmReset ? t.danger : t.border, backgroundColor: confirmReset ? `${t.danger}14` : 'transparent' }]}
       >
         <Ionicons name="refresh" size={18} color={t.danger} />
-        <Text style={[styles.body, { color: t.danger, fontWeight: type.bold }]}>
+        <Txt v="body" bold color={t.danger}>
           {confirmReset ? 'Appuie encore pour confirmer' : 'Remettre la journée à zéro'}
-        </Text>
+        </Txt>
       </Pressable>
 
-      <Text style={[styles.caption, { color: t.textMuted, textAlign: 'center', marginTop: space.xl }]}>
-        DrinkYourWater · v2.0
-      </Text>
+      <Txt v="caption" color={t.textMuted} style={styles.footer}>
+        DrinkYourWater · v2.1 · fait avec 💧
+      </Txt>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.xxxl },
   flex: { flex: 1 },
-  title: { fontSize: type.title, fontWeight: type.bold },
-  body: { fontSize: type.body, lineHeight: 24 },
-  caption: { fontSize: type.caption, lineHeight: 18 },
   gap: { height: space.xxl },
-  centerRow: { alignItems: 'center' },
+  goalCard: { alignItems: 'center' },
+  goalRow: { flexDirection: 'row', alignItems: 'center', gap: space.lg, marginVertical: space.md },
+  goalValue: { minWidth: 120, textAlign: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  icon: { width: 36, height: 36, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  divider: { height: 1, marginVertical: space.lg },
-  segment: { flexDirection: 'row', padding: space.xs, borderRadius: radius.md },
-  segItem: {
-    flex: 1,
-    height: 40,
-    borderRadius: radius.sm,
-    flexDirection: 'row',
+  glassRow: { flexDirection: 'row', gap: space.sm },
+  glassCard: { height: 96, borderRadius: radius.lg, borderWidth: 2, alignItems: 'center', justifyContent: 'center', gap: space.xs },
+  glassEmoji: { fontSize: 28 },
+  check: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: space.xs,
   },
+  noPad: { padding: 0 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.md },
+  noRowPad: { paddingHorizontal: 0, paddingVertical: 0 },
+  block: { padding: space.lg },
+  divider: { height: 1, marginLeft: 72 },
+  preview: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.lg, padding: space.md, borderRadius: radius.sm },
+  themeRow: { flexDirection: 'row', gap: space.sm },
+  themeCard: { height: 80, borderRadius: radius.lg, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
   reset: {
-    height: 52,
-    borderRadius: radius.md,
+    height: 56,
+    borderRadius: radius.lg,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: space.sm,
   },
+  footer: { textAlign: 'center', marginTop: space.xl },
 });

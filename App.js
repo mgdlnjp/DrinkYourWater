@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts, Nunito_600SemiBold, Nunito_800ExtraBold } from '@expo-google-fonts/nunito';
 import { HydrationProvider, useHydration } from './src/store';
 import { useTheme } from './src/components/ui';
 import TabBar from './src/components/TabBar';
@@ -12,42 +13,41 @@ import Onboarding from './src/screens/Onboarding';
 
 const SCREENS = { today: Today, history: History, settings: Settings };
 
-function Root() {
+function Root({ fontsReady }) {
   const t = useTheme();
   const { ready, onboarded } = useHydration();
   const [tab, setTab] = useState('today');
   const Screen = SCREENS[tab];
+  // L'en-tête dégradé passe sous la barre d'état : texte clair sur Aujourd'hui et l'onboarding.
+  const lightStatus = t.dark || !onboarded || tab === 'today';
 
   return (
     <View style={[styles.flex, { backgroundColor: t.bg }]}>
-      <StatusBar style={t.dark ? 'light' : 'dark'} />
-      <SafeAreaView style={styles.flex} edges={['top']}>
-        <View style={styles.frame}>
-          {!ready ? (
-            <View style={styles.center}>
-              <ActivityIndicator color={t.accent} />
-            </View>
-          ) : !onboarded ? (
-            <Onboarding />
-          ) : (
-            <>
-              <View style={styles.flex}>
-                <Screen />
-              </View>
-              <TabBar current={tab} onChange={setTab} />
-            </>
-          )}
-        </View>
-      </SafeAreaView>
+      <StatusBar style={lightStatus ? 'light' : 'dark'} />
+      <View style={styles.frame}>
+        {!ready || !fontsReady ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={t.accent} />
+          </View>
+        ) : !onboarded ? (
+          <Onboarding />
+        ) : (
+          <>
+            <Screen />
+            <TabBar current={tab} onChange={setTab} />
+          </>
+        )}
+      </View>
     </View>
   );
 }
 
 export default function App() {
+  const [fontsReady] = useFonts({ Nunito_600SemiBold, Nunito_800ExtraBold });
   return (
     <SafeAreaProvider>
       <HydrationProvider>
-        <Root />
+        <Root fontsReady={fontsReady} />
       </HydrationProvider>
     </SafeAreaProvider>
   );

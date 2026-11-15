@@ -1,32 +1,31 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHydration } from '../store';
 import { ensurePermission } from '../notifications';
-import { Chip, PrimaryButton, formatMl, hhmm, useTheme } from '../components/ui';
+import WaterBubble from '../components/WaterBubble';
+import { Chip, PrimaryButton, PressableScale, Txt, formatMl, hhmm, useTheme } from '../components/ui';
 import { GOALS, INTERVALS } from './Settings';
-import { space, type } from '../theme';
+import { radius, space } from '../theme';
 
+const WHITE_70 = 'rgba(255,255,255,0.75)';
 const WAKE = [6, 7, 8, 9];
 const SLEEP = [21, 22, 23];
+const STEPS = 3;
 
-// Un seul écran, des choix en un tap, et c'est parti.
+// Trois écrans courts sur fond océan : accroche, objectif, horaires.
 export default function Onboarding() {
   const t = useTheme();
+  const insets = useSafeAreaInsets();
   const { settings, updateSettings, setOnboarded } = useHydration();
   const [step, setStep] = useState(0);
-  const bounce = useRef(new Animated.Value(0)).current;
+  const [fill, setFill] = useState(0.15);
 
   useEffect(() => {
-    const native = Platform.OS !== 'web';
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(bounce, { toValue: -12, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: native }),
-        Animated.timing(bounce, { toValue: 0, duration: 600, easing: Easing.in(Easing.quad), useNativeDriver: native }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, []);
+    // La bulle se remplit au fil des étapes.
+    setFill([0.35, 0.6, 0.85][step]);
+  }, [step]);
 
   const finish = async () => {
     await ensurePermission();
@@ -34,93 +33,154 @@ export default function Onboarding() {
   };
 
   return (
-    <View style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
-          <View style={[styles.glow, { backgroundColor: t.accent }]} />
-          <Animated.Text style={[styles.drop, { transform: [{ translateY: bounce }] }]}>💧</Animated.Text>
+    <LinearGradient colors={t.hero} start={{ x: 0, y: 0 }} end={{ x: 0.5, y: 1 }} style={styles.flex}>
+      <View style={[styles.blob, styles.blobA]} />
+      <View style={[styles.blob, styles.blobB]} />
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + space.xl }]} showsVerticalScrollIndicator={false}>
+        <View style={styles.top}>
+          {step > 0 ? (
+            <PressableScale onPress={() => setStep(step - 1)} accessibilityLabel="Retour" style={styles.back}>
+              <Txt v="body" bold color="#fff">
+                ← Retour
+              </Txt>
+            </PressableScale>
+          ) : (
+            <View />
+          )}
+          <Txt v="caption" bold color={WHITE_70}>
+            {step + 1}/{STEPS}
+          </Txt>
         </View>
 
-        {step === 0 ? (
-          <>
-            <Text style={[styles.title, { color: t.text }]}>Bienvenue sur DrinkYourWater</Text>
-            <Text style={[styles.body, { color: t.textBody }]}>
-              Des rappels doux tout au long de la journée et un suivi simple de ce que tu bois. Deux questions et on
-              commence.
-            </Text>
-            <Text style={[styles.label, { color: t.text }]}>Combien veux-tu boire par jour ?</Text>
-            <View style={styles.chips}>
-              {GOALS.map((g) => (
-                <Chip
-                  key={g}
-                  label={formatMl(g)}
-                  emoji={g === 2000 ? '⭐' : undefined}
-                  selected={settings.goalMl === g}
-                  onPress={() => updateSettings({ goalMl: g })}
-                />
-              ))}
-            </View>
-            <Text style={[styles.caption, { color: t.textMuted }]}>⭐ 2 L est un bon repère pour la plupart des adultes.</Text>
-          </>
-        ) : (
-          <>
-            <Text style={[styles.title, { color: t.text }]}>Quand te rappeler ?</Text>
-            <Text style={[styles.body, { color: t.textBody }]}>On ne te dérange qu'entre ton réveil et ton coucher.</Text>
-            <Text style={[styles.label, { color: t.text }]}>☀️ Je me lève vers</Text>
-            <View style={styles.chips}>
-              {WAKE.map((h) => (
-                <Chip key={h} label={hhmm(h)} selected={settings.wakeHour === h} onPress={() => updateSettings({ wakeHour: h })} />
-              ))}
-            </View>
-            <Text style={[styles.label, { color: t.text }]}>🌙 Je me couche vers</Text>
-            <View style={styles.chips}>
-              {SLEEP.map((h) => (
-                <Chip key={h} label={hhmm(h)} selected={settings.sleepHour === h} onPress={() => updateSettings({ sleepHour: h })} />
-              ))}
-            </View>
-            <Text style={[styles.label, { color: t.text }]}>⏰ Un rappel toutes les</Text>
-            <View style={styles.chips}>
-              {INTERVALS.map((i) => (
-                <Chip
-                  key={i.min}
-                  label={i.label}
-                  selected={settings.intervalMin === i.min}
-                  onPress={() => updateSettings({ intervalMin: i.min })}
-                />
-              ))}
-            </View>
-          </>
-        )}
+        <View style={styles.bubble}>
+          <WaterBubble progress={fill} size={step === 0 ? 220 : 150} />
+        </View>
+
+        <View>
+          {step === 0 && (
+            <>
+              <Txt v="hero" bold color="#fff" style={styles.center}>
+                Bois mieux,{'\n'}sans y penser.
+              </Txt>
+              <Txt v="body" color={WHITE_70} style={[styles.center, styles.lead]}>
+                Des rappels doux, un suivi en un tap et une bulle qui se remplit à chaque verre.
+              </Txt>
+              <View style={styles.features}>
+                {[
+                  ['🔔', 'Rappels adaptés à ta journée'],
+                  ['💧', 'Ajout en un seul tap'],
+                  ['🏆', 'Séries et badges à débloquer'],
+                ].map(([e, l]) => (
+                  <View key={l} style={styles.feature}>
+                    <Txt v="title">{e}</Txt>
+                    <Txt v="body" bold color="#fff" style={styles.flex}>
+                      {l}
+                    </Txt>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+
+          {step === 1 && (
+            <>
+              <Txt v="title" bold color="#fff" style={styles.center}>
+                Ton objectif du jour
+              </Txt>
+              <Txt v="hero" bold color="#fff" style={[styles.center, styles.bigValue]}>
+                {formatMl(settings.goalMl)}
+              </Txt>
+              <View style={[styles.chips, styles.centerChips]}>
+                {GOALS.map((g) => (
+                  <Chip key={g} glass label={formatMl(g)} emoji={g === 2000 ? '⭐' : undefined} selected={settings.goalMl === g} onPress={() => updateSettings({ goalMl: g })} />
+                ))}
+              </View>
+              <Txt v="caption" color={WHITE_70} style={[styles.center, { marginTop: space.lg }]}>
+                ⭐ 2 L est un bon repère pour la plupart des adultes.{'\n'}Tu pourras le changer à tout moment.
+              </Txt>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <Txt v="title" bold color="#fff" style={styles.center}>
+                Quand te rappeler ?
+              </Txt>
+              <Txt v="body" color={WHITE_70} style={[styles.center, styles.lead]}>
+                Jamais pendant ton sommeil, promis.
+              </Txt>
+              <Group label="☀️ Je me lève vers">
+                {WAKE.map((h) => (
+                  <Chip key={h} glass label={hhmm(h)} selected={settings.wakeHour === h} onPress={() => updateSettings({ wakeHour: h })} />
+                ))}
+              </Group>
+              <Group label="🌙 Je me couche vers">
+                {SLEEP.map((h) => (
+                  <Chip key={h} glass label={hhmm(h)} selected={settings.sleepHour === h} onPress={() => updateSettings({ sleepHour: h })} />
+                ))}
+              </Group>
+              <Group label="⏰ Un rappel toutes les">
+                {INTERVALS.map((i) => (
+                  <Chip key={i.min} glass label={i.label} selected={settings.intervalMin === i.min} onPress={() => updateSettings({ intervalMin: i.min })} />
+                ))}
+              </Group>
+            </>
+          )}
+        </View>
       </ScrollView>
 
-      <View style={styles.dock}>
+      <View style={[styles.dock, { paddingBottom: insets.bottom + space.xl }]}>
         <View style={styles.dots}>
-          {[0, 1].map((i) => (
-            <View key={i} style={[styles.dot, { backgroundColor: i === step ? t.accent : t.accentTrack, width: i === step ? 24 : 8 }]} />
+          {Array.from({ length: STEPS }, (_, i) => (
+            <View key={i} style={[styles.dot, { width: i === step ? 24 : 8, opacity: i === step ? 1 : 0.4 }]} />
           ))}
         </View>
         <PrimaryButton
-          label={step === 0 ? 'Continuer' : 'Activer mes rappels'}
-          icon={step === 0 ? 'arrow-forward' : 'notifications'}
-          onPress={step === 0 ? () => setStep(1) : finish}
+          light
+          label={step === 0 ? "C'est parti" : step === 1 ? 'Continuer' : 'Activer mes rappels'}
+          icon={step < 2 ? 'arrow-forward' : 'notifications'}
+          onPress={step < 2 ? () => setStep(step + 1) : finish}
         />
       </View>
+    </LinearGradient>
+  );
+}
+
+function Group({ label, children }) {
+  return (
+    <View style={{ marginTop: space.xl }}>
+      <Txt v="body" bold color="#fff" style={{ marginBottom: space.md }}>
+        {label}
+      </Txt>
+      <View style={styles.chips}>{children}</View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  scroll: { paddingHorizontal: space.xl, paddingTop: space.xxl, paddingBottom: space.xl, gap: space.md },
-  hero: { alignItems: 'center', justifyContent: 'center', height: 160, marginBottom: space.lg },
-  glow: { position: 'absolute', width: 140, height: 140, borderRadius: 70, opacity: 0.12 },
-  drop: { fontSize: 80 },
-  title: { fontSize: type.title, fontWeight: type.bold },
-  body: { fontSize: type.body, lineHeight: 24 },
-  caption: { fontSize: type.caption, lineHeight: 18 },
-  label: { fontSize: type.body, fontWeight: type.bold, marginTop: space.lg },
+  center: { textAlign: 'center' },
+  blob: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.06)' },
+  blobA: { width: 320, height: 320, top: -140, right: -120 },
+  blobB: { width: 240, height: 240, bottom: 80, left: -120 },
+  scroll: { paddingHorizontal: space.xl, paddingBottom: space.xl },
+  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 32 },
+  back: { paddingVertical: space.xs },
+  bubble: { alignItems: 'center', marginVertical: space.xxl },
+  lead: { marginTop: space.md },
+  bigValue: { marginVertical: space.lg },
+  features: { marginTop: space.xl, gap: space.sm },
+  feature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    padding: space.md,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  dock: { paddingHorizontal: space.xl, paddingBottom: space.xl, gap: space.lg },
+  centerChips: { justifyContent: 'center' },
+  dock: { paddingHorizontal: space.xl, gap: space.lg },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
-  dot: { height: 8, borderRadius: 4 },
+  dot: { height: 8, borderRadius: 4, backgroundColor: '#fff' },
 });
