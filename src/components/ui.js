@@ -108,13 +108,18 @@ export function PrimaryButton({ label, icon, onPress, haptic = 'medium', light }
 }
 
 // Puce de sélection. `glass` = version pour fond dégradé.
-export function Chip({ label, emoji, selected, onPress, glass }) {
+export function Chip({ label, emoji, selected, onPress, glass, stretch }) {
   const t = useTheme();
   const bg = glass ? (selected ? '#FFFFFF' : 'rgba(255,255,255,0.14)') : selected ? t.accent : t.accentSoft;
   const fg = glass ? (selected ? t.accent : '#FFFFFF') : selected ? '#FFFFFF' : t.text;
   const border = glass ? (selected ? '#FFFFFF' : 'rgba(255,255,255,0.22)') : selected ? t.accent : t.border;
   return (
-    <PressableScale onPress={onPress} accessibilityLabel={label} style={[styles.chip, { backgroundColor: bg, borderColor: border }]}>
+    <PressableScale
+      onPress={onPress}
+      accessibilityLabel={label}
+      containerStyle={stretch && styles.stretch}
+      style={[styles.chip, stretch && styles.chipStretch, { backgroundColor: bg, borderColor: border }]}
+    >
       {emoji ? <Text style={styles.emoji}>{emoji}</Text> : null}
       <Txt v="body" bold color={fg}>
         {label}
@@ -196,6 +201,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.sm,
   },
+  stretch: { flex: 1 },
+  chipStretch: { justifyContent: 'center', paddingHorizontal: space.sm },
   emoji: { fontSize: 16 },
   round: { borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: space.md },

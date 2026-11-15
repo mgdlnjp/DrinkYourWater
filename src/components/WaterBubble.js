@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ND } from './ui';
 
 // Vague périodique : la période divise `size`, donc un décalage de `size` boucle sans couture.
@@ -13,11 +14,18 @@ function wavePath(width, period, amp, height) {
   return `${d} L ${width} ${height} L 0 ${height} Z`;
 }
 
-// Taille unique de la bulle dans toute l'app : elle suit la largeur de l'écran,
-// mais ne change jamais d'un écran ou d'une étape à l'autre.
+// Hauteur occupée par tout le reste de l'étape d'onboarding la plus chargée
+// (en-tête, contenu, bouton) : la bulle prend ce qui reste, sans jamais forcer le défilement.
+const RESERVED_HEIGHT = 540;
+
+// Taille unique de la bulle dans toute l'app : elle suit la taille de l'écran
+// (largeur ET hauteur) mais ne change jamais d'un écran ou d'une étape à l'autre.
 export function useBubbleSize() {
-  const { width } = useWindowDimensions();
-  return Math.round(Math.max(180, Math.min(232, Math.min(width, 520) * 0.56)));
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const byWidth = Math.min(width, 520) * 0.56;
+  const byHeight = height - insets.top - insets.bottom - RESERVED_HEIGHT;
+  return Math.round(Math.max(100, Math.min(232, byWidth, byHeight)));
 }
 
 // Bulle d'eau animée : le niveau monte avec la progression, deux vagues ondulent,

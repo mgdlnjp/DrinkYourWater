@@ -37,7 +37,7 @@ export default function Onboarding() {
     <LinearGradient colors={t.hero} start={{ x: 0, y: 0 }} end={{ x: 0.5, y: 1 }} style={styles.flex}>
       <View style={[styles.blob, styles.blobA]} />
       <View style={[styles.blob, styles.blobB]} />
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + space.xl }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + space.lg }]} showsVerticalScrollIndicator={false}>
         <View style={styles.top}>
           {step > 0 ? (
             <PressableScale onPress={() => setStep(step - 1)} accessibilityLabel="Retour" style={styles.back}>
@@ -112,17 +112,17 @@ export default function Onboarding() {
               </Txt>
               <Group label="☀️ Je me lève vers">
                 {WAKE.map((h) => (
-                  <Chip key={h} glass label={hhmm(h)} selected={settings.wakeHour === h} onPress={() => updateSettings({ wakeHour: h })} />
+                  <Chip key={h} glass stretch label={hhmm(h)} selected={settings.wakeHour === h} onPress={() => updateSettings({ wakeHour: h })} />
                 ))}
               </Group>
               <Group label="🌙 Je me couche vers">
                 {SLEEP.map((h) => (
-                  <Chip key={h} glass label={hhmm(h)} selected={settings.sleepHour === h} onPress={() => updateSettings({ sleepHour: h })} />
+                  <Chip key={h} glass stretch label={hhmm(h)} selected={settings.sleepHour === h} onPress={() => updateSettings({ sleepHour: h })} />
                 ))}
               </Group>
               <Group label="⏰ Un rappel toutes les">
                 {INTERVALS.map((i) => (
-                  <Chip key={i.min} glass label={i.label} selected={settings.intervalMin === i.min} onPress={() => updateSettings({ intervalMin: i.min })} />
+                  <Chip key={i.min} glass stretch label={i.label} selected={settings.intervalMin === i.min} onPress={() => updateSettings({ intervalMin: i.min })} />
                 ))}
               </Group>
             </>
@@ -130,7 +130,7 @@ export default function Onboarding() {
         </View>
       </ScrollView>
 
-      <View style={[styles.dock, { paddingBottom: insets.bottom + space.xl }]}>
+      <View style={[styles.dock, { paddingBottom: insets.bottom + space.lg }]}>
         <View style={styles.dots}>
           {Array.from({ length: STEPS }, (_, i) => (
             <View key={i} style={[styles.dot, { width: i === step ? 24 : 8, opacity: i === step ? 1 : 0.4 }]} />
@@ -149,11 +149,11 @@ export default function Onboarding() {
 
 function Group({ label, children }) {
   return (
-    <View style={{ marginTop: space.xl }}>
-      <Txt v="body" bold color="#fff" style={{ marginBottom: space.md }}>
+    <View style={{ marginTop: space.lg }}>
+      <Txt v="body" bold color="#fff" style={{ marginBottom: space.sm }}>
         {label}
       </Txt>
-      <View style={styles.chips}>{children}</View>
+      <View style={styles.row}>{children}</View>
     </View>
   );
 }
@@ -167,19 +167,21 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: space.xl, paddingBottom: space.xl },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 32 },
   back: { paddingVertical: space.xs },
-  bubble: { alignItems: 'center', marginVertical: space.xl },
-  lead: { marginTop: space.md },
+  bubble: { alignItems: 'center', marginVertical: space.lg },
+  lead: { marginTop: space.sm },
   bigValue: { marginVertical: space.lg },
-  features: { marginTop: space.xl, gap: space.sm },
+  features: { marginTop: space.lg, gap: space.sm },
   feature: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.md,
-    padding: space.md,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.md,
     borderRadius: radius.md,
     backgroundColor: 'rgba(255,255,255,0.12)',
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  row: { flexDirection: 'row', gap: space.sm },
   centerChips: { justifyContent: 'center' },
   dock: { paddingHorizontal: space.xl, gap: space.lg },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: space.sm },
