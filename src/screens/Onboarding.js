@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, PanResponder, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHydration } from '../store';
 import { ensurePermission } from '../notifications';
 import WaterBubble, { useBubbleSize } from '../components/WaterBubble';
-import { Chip, PrimaryButton, PressableScale, Txt, formatMl, hhmm, useTheme } from '../components/ui';
+import { Chip, ND, PrimaryButton, PressableScale, Txt, formatMl, hhmm, tap, useTheme } from '../components/ui';
 import { GOALS, INTERVALS } from './Settings';
 import { radius, space } from '../theme';
 
@@ -28,19 +28,49 @@ export default function Onboarding() {
     setFill([0.35, 0.6, 0.85][step]);
   }, [step]);
 
+  // Navigation entre étapes : le contenu glisse dans le sens du geste (la bulle reste fixe).
+  const slide = useRef(new Animated.Value(0)).current;
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  const go = (to) => {
+    if (to < 0 || to >= STEPS || to === stepRef.current) return;
+    const dir = to > stepRef.current ? 1 : -1;
+    tap('light');
+    setStep(to);
+    slide.setValue(dir * 48);
+    Animated.timing(slide, { toValue: 0, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: ND }).start();
+  };
+  const goRef = useRef(go);
+  goRef.current = go;
+
+  // Balayage horizontal : vers la droite = étape précédente, vers la gauche = suivante.
+  const pan = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponderCapture: (_, g) => Math.abs(g.dx) > 16 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+        onPanResponderRelease: (_, g) => {
+          const fast = Math.abs(g.vx) > 0.3;
+          if (g.dx > 60 || (fast && g.dx > 20)) goRef.current(stepRef.current - 1);
+          else if (g.dx < -60 || (fast && g.dx < -20)) goRef.current(stepRef.current + 1);
+        },
+        onPanResponderTerminationRequest: () => true,
+      }),
+    []
+  );
+
   const finish = async () => {
     await ensurePermission();
     setOnboarded(true);
   };
 
   return (
-    <LinearGradient colors={t.hero} start={{ x: 0, y: 0 }} end={{ x: 0.5, y: 1 }} style={styles.flex}>
+    <LinearGradient colors={t.hero} start={{ x: 0, y: 0 }} end={{ x: 0.5, y: 1 }} style={styles.flex} {...pan.panHandlers}>
       <View style={[styles.blob, styles.blobA]} />
       <View style={[styles.blob, styles.blobB]} />
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + space.lg }]} showsVerticalScrollIndicator={false}>
         <View style={styles.top}>
           {step > 0 ? (
-            <PressableScale onPress={() => setStep(step - 1)} accessibilityLabel="Retour" style={styles.back}>
+            <PressableScale onPress={() => go(step - 1)} accessibilityLabel="Retour" style={styles.back}>
               <Txt v="body" bold color="#fff">
                 ← Retour
               </Txt>
@@ -57,7 +87,7 @@ export default function Onboarding() {
           <WaterBubble progress={fill} size={bubbleSize} />
         </View>
 
-        <View>
+        <Animated.View style={{ transform: [{ translateX: slide }] }}>
           {step === 0 && (
             <>
               <Txt v="hero" bold color="#fff" style={styles.center}>
@@ -127,7 +157,7 @@ export default function Onboarding() {
               </Group>
             </>
           )}
-        </View>
+        </Animated.View>
       </ScrollView>
 
       <View style={[styles.dock, { paddingBottom: insets.bottom + space.lg }]}>
@@ -140,7 +170,7 @@ export default function Onboarding() {
           light
           label={step === 0 ? "C'est parti" : step === 1 ? 'Continuer' : 'Activer mes rappels'}
           icon={step < 2 ? 'arrow-forward' : 'notifications'}
-          onPress={step < 2 ? () => setStep(step + 1) : finish}
+          onPress={step < 2 ? () => go(step + 1) : finish}
         />
       </View>
     </LinearGradient>
@@ -149,7 +179,7 @@ export default function Onboarding() {
 
 function Group({ label, children }) {
   return (
-    <View style={{ marginTop: space.lg }}>
+    <View style={{ marginTop: space.md }}>
       <Txt v="body" bold color="#fff" style={{ marginBottom: space.sm }}>
         {label}
       </Txt>
@@ -164,7 +194,7 @@ const styles = StyleSheet.create({
   blob: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.06)' },
   blobA: { width: 320, height: 320, top: -140, right: -120 },
   blobB: { width: 240, height: 240, bottom: 80, left: -120 },
-  scroll: { paddingHorizontal: space.xl, paddingBottom: space.xl },
+  scroll: { paddingHorizontal: space.xl, paddingBottom: space.md },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 32 },
   back: { paddingVertical: space.xs },
   bubble: { alignItems: 'center', marginVertical: space.lg },

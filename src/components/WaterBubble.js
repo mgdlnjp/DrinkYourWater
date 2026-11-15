@@ -16,16 +16,16 @@ function wavePath(width, period, amp, height) {
 
 // Hauteur occupée par tout le reste de l'étape d'onboarding la plus chargée
 // (en-tête, contenu, bouton) : la bulle prend ce qui reste, sans jamais forcer le défilement.
-const RESERVED_HEIGHT = 540;
+const RESERVED_HEIGHT = 525; // mesuré sur l'étape « horaires », la plus chargée
 
 // Taille unique de la bulle dans toute l'app : elle suit la taille de l'écran
 // (largeur ET hauteur) mais ne change jamais d'un écran ou d'une étape à l'autre.
 export function useBubbleSize() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const byWidth = Math.min(width, 520) * 0.56;
+  const byWidth = Math.min(width, 520) * 0.62;
   const byHeight = height - insets.top - insets.bottom - RESERVED_HEIGHT;
-  return Math.round(Math.max(100, Math.min(232, byWidth, byHeight)));
+  return Math.round(Math.max(110, Math.min(256, byWidth, byHeight)));
 }
 
 // Bulle d'eau animée : le niveau monte avec la progression, deux vagues ondulent,
