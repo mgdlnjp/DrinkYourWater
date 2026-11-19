@@ -16,7 +16,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#2B7FFF"
+        "backgroundColor": "#2B7FFF",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.DrinkYourWater2.app"
     },
